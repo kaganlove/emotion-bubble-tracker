@@ -1,60 +1,97 @@
-
 body {
   margin: 0;
-  padding: 0;
-  height: 100vh;
-  background: linear-gradient(to bottom right, #b6f7a2, #c9f78c);
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #b2f7b5, #c0f7a8);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-family: Arial, sans-serif;
+  height: 100vh;
 }
 
 h1 {
-  margin: 20px 0;
-  font-size: 24px;
+  margin-top: 20px;
+  color: #222;
 }
 
-.bubble-container {
+#bubble-container {
   position: relative;
-  flex-grow: 1;
   width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
 .bubble {
   position: absolute;
-  width: 100px;
-  height: 100px;
-  background-color: #e7ffe6;
+  background: #e8ffe8;
   border-radius: 50%;
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
+  padding: 25px 35px;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
   cursor: pointer;
-  animation: float 8s linear infinite alternate;
+  animation: floatUp 10s linear forwards, floatWiggle 4s ease-in-out infinite;
 }
 
-.splat-message {
+@keyframes floatUp {
+  from {
+    bottom: -100px;
+    opacity: 0;
+  }
+  to {
+    bottom: 50%;
+    opacity: 1;
+  }
+}
+
+@keyframes floatWiggle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  50% { transform: translateX(10px); }
+  75% { transform: translateX(-5px); }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+.splat {
   position: absolute;
-  padding: 20px;
-  background-color: #ffffcc;
-  border: 2px solid #999966;
-  border-radius: 50%;
   font-weight: bold;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  z-index: 100;
+  padding: 20px;
+  background: #fffeb8;
+  color: #333;
+  border-radius: 50%;
+  transform: rotate(-10deg);
   animation: fadeOut 3s forwards;
 }
 
-@keyframes float {
-  0% { transform: translateY(0) rotate(0); }
-  100% { transform: translateY(-30px) rotate(6deg); }
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: scale(1.2);
+  }
 }
 
-@keyframes fadeOut {
-  0% { opacity: 1; }
-  100% { opacity: 0; }
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #ffeb3b;
+  border-radius: 50%;
+  animation: particleFly 0.8s ease-out forwards;
+}
+
+@keyframes particleFly {
+  0% { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)); }
 }

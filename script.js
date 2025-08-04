@@ -1,45 +1,45 @@
+const emotions = ["Tense", "Floaty", "Numb", "Jittery", "Tight Chest", "Sad"];
+const container = document.getElementById("bubble-container");
 
-const emotions = ['Tense', 'Floaty', 'Numb', 'Jittery', 'Tight Chest', 'Sad'];
-const container = document.getElementById('bubbleContainer');
-const popSound = document.getElementById('popSound');
-
-function createBubble(emotion) {
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
-  bubble.innerText = emotion;
-  setRandomPosition(bubble);
-  bubble.addEventListener('click', () => popBubble(bubble, emotion));
+function createBubble(emotion, index) {
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = emotion;
+  bubble.style.left = `${10 + index * 15}%`;
+  bubble.style.bottom = `-100px`;
+  bubble.style.animationDelay = `${Math.random() * 2}s`;
+  bubble.addEventListener("click", () => popBubble(bubble, emotion));
   container.appendChild(bubble);
 }
 
-function setRandomPosition(bubble) {
-  const maxX = container.clientWidth - 100;
-  const maxY = container.clientHeight - 100;
-  bubble.style.left = Math.random() * maxX + 'px';
-  bubble.style.top = container.clientHeight + 'px'; // start below screen
-  setTimeout(() => {
-    bubble.style.transition = 'top 1s ease-out';
-    bubble.style.top = Math.random() * maxY + 'px';
-  }, 100);
-}
-
 function popBubble(bubble, emotion) {
-  if (popSound) popSound.play();
-
   const rect = bubble.getBoundingClientRect();
-  const msg = document.createElement('div');
-  msg.className = 'splat-message';
-  msg.innerText = `it's ok to feel ${emotion.toLowerCase()}`;
-  msg.style.left = `${rect.left + rect.width / 4}px`;
-  msg.style.top = `${rect.top}px`;
+  const splat = document.createElement("div");
+  splat.className = "splat";
+  splat.style.left = `${rect.left}px`;
+  splat.style.top = `${rect.top}px`;
+  splat.textContent = `it's ok to feel ${emotion.toLowerCase()}`;
+  document.body.appendChild(splat);
 
-  document.body.appendChild(msg);
-  bubble.remove();
+  for (let i = 0; i < 10; i++) {
+    const particle = document.createElement("div");
+    particle.className = "particle";
+    const dx = `${(Math.random() - 0.5) * 100}px`;
+    const dy = `${(Math.random() - 0.5) * 100}px`;
+    particle.style.left = `${rect.left + 20}px`;
+    particle.style.top = `${rect.top + 20}px`;
+    particle.style.setProperty('--dx', dx);
+    particle.style.setProperty('--dy', dy);
+    document.body.appendChild(particle);
+    setTimeout(() => particle.remove(), 800);
+  }
 
+  bubble.style.animation = "pop 0.5s forwards";
   setTimeout(() => {
-    msg.remove();
-    createBubble(emotion);
-  }, 3000);
+    bubble.remove();
+    setTimeout(() => createBubble(emotion, Math.floor(Math.random() * 6)), 1000);
+  }, 500);
+  setTimeout(() => splat.remove(), 3000);
 }
 
-emotions.forEach(createBubble);
+emotions.forEach((emotion, i) => createBubble(emotion, i));

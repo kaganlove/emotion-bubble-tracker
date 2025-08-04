@@ -9,12 +9,11 @@
 <body>
   <h1>How are you feeling right now?</h1>
 
-  <!-- Modal -->
-  <div id="modal" class="modal hidden">
-    <div class="modal-content">
-      <p id="response-text">You selected...</p>
-      <button id="close-btn">Close</button>
-    </div>
+  <audio id="pop-sound" src="pop.mp3" preload="auto"></audio>
+
+  <!-- Modal splat -->
+  <div id="splat" class="splat hidden">
+    <p id="splat-text">...</p>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>

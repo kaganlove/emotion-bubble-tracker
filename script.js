@@ -34,11 +34,12 @@ function popBubble(bubble, text) {
     const splat = document.createElement("div");
     splat.className = "splat-message";
     splat.textContent = `it's ok to feel ${text.toLowerCase()}`;
+    splat.style.position = "fixed";
     splat.style.left = rect.left + "px";
     splat.style.top = rect.top + "px";
     splat.style.width = bubble.offsetWidth + "px";
     splat.style.height = bubble.offsetHeight + "px";
-    container.appendChild(splat);
+    document.body.appendChild(splat);
 
     bubble.style.animation = "pop 0.4s forwards";
 
@@ -54,6 +55,7 @@ function createParticles(x, y) {
     for (let i = 0; i < 10; i++) {
         const particle = document.createElement("div");
         particle.className = "particle";
+        particle.style.position = "fixed";
         particle.style.left = x + "px";
         particle.style.top = y + "px";
 
@@ -64,7 +66,7 @@ function createParticles(x, y) {
         particle.style.setProperty("--x", xMove);
         particle.style.setProperty("--y", yMove);
 
-        container.appendChild(particle);
+        document.body.appendChild(particle);
         setTimeout(() => particle.remove(), 600);
     }
 }

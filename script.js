@@ -12,15 +12,20 @@ function createBubble(text) {
     bubble.textContent = text;
 
     const size = randomFloat(80, 120);
-    bubble.style.width = bubble.style.height = size + "px";
-    bubble.style.lineHeight = size + "px";  // vertically center text
-    bubble.style.textAlign = "center";
-
-    bubble.style.left = randomFloat(10, 90) + "%";
-    bubble.style.top = "100%";
-
-    bubble.style.animation = `float ${randomFloat(3, 6)}s linear infinite`;
-    bubble.style.animationDelay = randomFloat(0, 2) + "s";
+    Object.assign(bubble.style, {
+        width: size + "px",
+        height: size + "px",
+        lineHeight: size + "px",
+        textAlign: "center",
+        borderRadius: "50%",
+        padding: "0",
+        margin: "0",
+        position: "absolute",
+        animation: `float ${randomFloat(3, 6)}s linear infinite`,
+        animationDelay: randomFloat(0, 2) + "s",
+        top: "100%",
+        left: randomFloat(10, 90) + "%",
+    });
 
     container.appendChild(bubble);
 
@@ -36,11 +41,17 @@ function popBubble(bubble, text) {
     const splat = document.createElement("div");
     splat.className = "splat-message";
     splat.textContent = `it's ok to feel ${text.toLowerCase()}`;
-    splat.style.position = "fixed";
-    splat.style.left = rect.left + "px";
-    splat.style.top = rect.top + "px";
-    splat.style.width = bubble.offsetWidth + "px";
-    splat.style.height = bubble.offsetHeight + "px";
+    Object.assign(splat.style, {
+        position: "fixed",
+        left: rect.left + "px",
+        top: rect.top + "px",
+        width: bubble.offsetWidth + "px",
+        height: bubble.offsetHeight + "px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center"
+    });
     document.body.appendChild(splat);
 
     bubble.style.animation = "pop 0.4s forwards";
@@ -61,13 +72,12 @@ function createParticles(x, y) {
         particle.style.top = y + "px";
 
         const angle = Math.random() * 2 * Math.PI;
-        const distance = (Math.random() * 50 + 20) * 2;  // double the distance
+        const distance = (Math.random() * 50 + 20) * 4;  // quadrupled distance
         const xMove = Math.cos(angle) * distance;
         const yMove = Math.sin(angle) * distance;
 
         document.body.appendChild(particle);
 
-        // Animate with transform directly
         setTimeout(() => {
             particle.style.transition = "transform 0.6s ease-out, opacity 0.6s ease-out";
             particle.style.transform = `translate(${xMove}px, ${yMove}px) scale(0)`;

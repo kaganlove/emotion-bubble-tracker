@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeBtn = document.getElementById("close-btn");
 
   // Create floating bubbles
-  emotions.forEach((emotion, index) => {
+  emotions.forEach((emotion) => {
     const bubble = document.createElement("div");
     bubble.classList.add("bubble");
     bubble.textContent = emotion;

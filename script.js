@@ -11,16 +11,22 @@ function createBubble(text) {
     bubble.className = "bubble";
     bubble.textContent = text;
 
-    const size = randomFloat(80, 120);
+    const minSize = 130;  // Increased to ensure long text like "Tight Chest" fits
+    const maxSize = 180;  // Allow more variation in large bubble size
+    const size = randomFloat(minSize, maxSize);
     Object.assign(bubble.style, {
         width: size + "px",
         height: size + "px",
-        lineHeight: size + "px",
+        lineHeight: "normal",
+        padding: "10px",
+        fontSize: "16px",
         textAlign: "center",
         borderRadius: "50%",
-        padding: "0",
-        margin: "0",
         position: "absolute",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexWrap: "wrap",
         animation: `float ${randomFloat(3, 6)}s linear infinite`,
         animationDelay: randomFloat(0, 2) + "s",
         top: "100%",
@@ -72,7 +78,7 @@ function createParticles(x, y) {
         particle.style.top = y + "px";
 
         const angle = Math.random() * 2 * Math.PI;
-        const distance = (Math.random() * 50 + 20) * 4;  // quadrupled distance
+        const distance = (Math.random() * 50 + 20) * 4;
         const xMove = Math.cos(angle) * distance;
         const yMove = Math.sin(angle) * distance;
 

@@ -43,6 +43,8 @@ function createBubble(text) {
 }
 
 function popBubble(bubble, text) {
+    const audio = document.getElementById('pop-sound');
+    if (audio) audio.currentTime = 0, audio.play();
     const rect = bubble.getBoundingClientRect();
     const splat = document.createElement("div");
     splat.className = "splat-message";

@@ -61,13 +61,19 @@ function createParticles(x, y) {
 
         const angle = Math.random() * 2 * Math.PI;
         const distance = Math.random() * 50 + 20;
-        const xMove = Math.cos(angle) * distance + "px";
-        const yMove = Math.sin(angle) * distance + "px";
-        particle.style.setProperty("--x", xMove);
-        particle.style.setProperty("--y", yMove);
+        const xMove = Math.cos(angle) * distance;
+        const yMove = Math.sin(angle) * distance;
 
         document.body.appendChild(particle);
-        setTimeout(() => particle.remove(), 600);
+
+        // Animate with transform directly
+        setTimeout(() => {
+            particle.style.transition = "transform 0.6s ease-out, opacity 0.6s ease-out";
+            particle.style.transform = `translate(${xMove}px, ${yMove}px) scale(0)`;
+            particle.style.opacity = "0";
+        }, 10);
+
+        setTimeout(() => particle.remove(), 700);
     }
 }
 

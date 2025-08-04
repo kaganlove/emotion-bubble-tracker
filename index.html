@@ -1,26 +1,16 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Emotion Bubble Tracker</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <h1>How are you feeling right now?</h1>
-
-  <audio id="pop-sound" src="pop.mp3" preload="auto"></audio>
-
-  <div id="splat" class="splat hidden">
-    <svg width="160" height="160" viewBox="0 0 160 160">
-      <path d="M80 0 Q100 50 160 40 Q140 90 160 120 Q100 110 80 160 Q60 110 0 120 Q20 90 0 40 Q60 50 80 0 Z"
-            fill="#fffacd" stroke="#333" stroke-width="2"></path>
-      <text x="50%" y="55%" text-anchor="middle" fill="#222" font-size="14px" font-weight="bold" id="splat-text">
-        it's ok to feel ...
-      </text>
-    </svg>
-  </div>
-
+  <div class="bubble-container" id="bubbleContainer"></div>
+  <audio id="popSound" src="pop.mp3" preload="auto"></audio>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
   <script src="script.js"></script>
 </body>

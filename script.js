@@ -13,11 +13,13 @@ function createBubble(text) {
 
     const size = randomFloat(80, 120);
     bubble.style.width = bubble.style.height = size + "px";
+    bubble.style.lineHeight = size + "px";  // vertically center text
+    bubble.style.textAlign = "center";
 
     bubble.style.left = randomFloat(10, 90) + "%";
     bubble.style.top = "100%";
 
-    bubble.style.animationDuration = randomFloat(3, 6) + "s";
+    bubble.style.animation = `float ${randomFloat(3, 6)}s linear infinite`;
     bubble.style.animationDelay = randomFloat(0, 2) + "s";
 
     container.appendChild(bubble);
@@ -42,7 +44,6 @@ function popBubble(bubble, text) {
     document.body.appendChild(splat);
 
     bubble.style.animation = "pop 0.4s forwards";
-
     createParticles(rect.left + bubble.offsetWidth / 2, rect.top + bubble.offsetHeight / 2);
 
     setTimeout(() => {
@@ -60,7 +61,7 @@ function createParticles(x, y) {
         particle.style.top = y + "px";
 
         const angle = Math.random() * 2 * Math.PI;
-        const distance = Math.random() * 50 + 20;
+        const distance = (Math.random() * 50 + 20) * 2;  // double the distance
         const xMove = Math.cos(angle) * distance;
         const yMove = Math.sin(angle) * distance;
 

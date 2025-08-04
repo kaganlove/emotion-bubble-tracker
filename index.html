@@ -11,9 +11,15 @@
 
   <audio id="pop-sound" src="pop.mp3" preload="auto"></audio>
 
-  <!-- Modal splat -->
+  <!-- SVG splat container -->
   <div id="splat" class="splat hidden">
-    <p id="splat-text">...</p>
+    <svg width="160" height="160" viewBox="0 0 160 160">
+      <polygon points="80,0 100,60 160,80 100,100 80,160 60,100 0,80 60,60"
+        style="fill: #fffacd; stroke: #333; stroke-width: 2;"></polygon>
+      <text x="50%" y="55%" text-anchor="middle" fill="#222" font-size="14px" font-weight="bold" id="splat-text">
+        You're safe to feel this.
+      </text>
+    </svg>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>

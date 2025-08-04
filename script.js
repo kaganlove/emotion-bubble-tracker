@@ -4,46 +4,62 @@ document.addEventListener("DOMContentLoaded", () => {
   const splat = document.getElementById("splat");
   const splatText = document.getElementById("splat-text");
 
-  emotions.forEach((emotion) => {
+  const usedZones = new Set();
+  const totalZones = 12;
+
+  function getUniquePosition(index) {
+    let zone;
+    do {
+      zone = Math.floor(Math.random() * totalZones);
+    } while (usedZones.has(zone));
+    usedZones.add(zone);
+
+    const col = zone % 4;
+    const row = Math.floor(zone / 4);
+
+    const left = 10 + col * 20 + Math.random() * 5;
+    const top = 15 + row * 20 + Math.random() * 5;
+
+    return { left, top };
+  }
+
+  emotions.forEach((emotion, index) => {
     const bubble = document.createElement("div");
     bubble.classList.add("bubble");
     bubble.textContent = emotion;
     bubble.dataset.emotion = emotion;
 
-    // Random initial position
-    bubble.style.left = `${Math.random() * 80 + 5}%`;
-    bubble.style.top = `${Math.random() * 70 + 10}%`;
+    const { left, top } = getUniquePosition(index);
+    bubble.style.left = `${left}%`;
+    bubble.style.top = `${top}%`;
 
     document.body.appendChild(bubble);
 
     bubble.addEventListener("click", () => {
       const selectedEmotion = bubble.dataset.emotion;
 
-      // Play sound
       popSound.currentTime = 0;
       popSound.play();
 
-      // Animate pop
       anime({
         targets: bubble,
-        scale: [1, 0],
+        scale: [1, 1.4, 0],
+        opacity: [1, 0],
         easing: 'easeInOutQuad',
-        duration: 300,
+        duration: 400,
         complete: () => {
           bubble.remove();
 
-          // Show splat at bubble position
-          splatText.innerText = `"${selectedEmotion}"`;
+          // Splat message
+          splatText.textContent = `You're safe to feel ${selectedEmotion}.`;
           splat.style.left = bubble.style.left;
           splat.style.top = bubble.style.top;
           splat.classList.remove("hidden");
 
-          // Hide splat after animation
           setTimeout(() => {
             splat.classList.add("hidden");
-          }, 2500);
+          }, 3000);
 
-          // Recreate bubble from bottom
           const newBubble = document.createElement("div");
           newBubble.classList.add("bubble");
           newBubble.textContent = selectedEmotion;
@@ -53,12 +69,10 @@ document.addEventListener("DOMContentLoaded", () => {
           newBubble.style.animation = "reappear 2s ease-out forwards";
 
           document.body.appendChild(newBubble);
-
           newBubble.addEventListener("click", bubble.click);
         }
       });
 
-      // Save to localStorage
       let logs = JSON.parse(localStorage.getItem("emotionLogs")) || [];
       logs.push({ emotion: selectedEmotion, timestamp: new Date().toISOString() });
       localStorage.setItem("emotionLogs", JSON.stringify(logs));

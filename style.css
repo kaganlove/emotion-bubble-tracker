@@ -19,12 +19,15 @@ h1 {
 }
 .bubble {
     position: absolute;
-    padding: 30px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.7);
     box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     font-weight: bold;
     cursor: pointer;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     animation: float linear infinite;
 }
 @keyframes float {
@@ -38,29 +41,27 @@ h1 {
     100% { transform: scale(0); opacity: 0; }
 }
 .splat-message {
-    position: absolute;
+    position: fixed;
     background-color: rgba(255, 255, 200, 0.9);
     border: 2px solid #555;
     border-radius: 50%;
-    padding: 20px;
     font-weight: bold;
     z-index: 1000;
     animation: fadeOut 3s forwards;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 @keyframes fadeOut {
     0% { opacity: 1; }
     100% { opacity: 0; transform: scale(0.8); }
 }
 .particle {
-    position: absolute;
+    position: fixed;
     width: 10px;
     height: 10px;
     background: hotpink;
     border-radius: 50%;
     z-index: 1000;
-    animation: fly 600ms ease-out forwards;
-}
-@keyframes fly {
-    from { opacity: 1; transform: translate(0, 0) scale(1); }
-    to { opacity: 0; transform: translate(var(--x), var(--y)) scale(0); }
 }

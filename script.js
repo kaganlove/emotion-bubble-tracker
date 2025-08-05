@@ -20,14 +20,16 @@ function createBubble(text) {
     const viewportHeight = window.innerHeight;
 
     // Confine initial position to visible area
-    const top = randomFloat(bubbleHalf, viewportHeight - bubbleHalf);
-    const left = randomFloat(bubbleHalf, viewportWidth - bubbleHalf);
+    const maxLeft = viewportWidth - size;
+    const maxTop = viewportHeight - size;
+    const top = randomFloat(0, maxTop);
+    const left = randomFloat(0, maxLeft);
 
-    // Calculate drift while keeping within bounds
-    const maxDriftX = Math.min(30, viewportWidth - left - bubbleHalf, left - bubbleHalf);
-    const maxDriftY = Math.min(30, viewportHeight - top - bubbleHalf, top - bubbleHalf);
-    const driftX = randomFloat(-maxDriftX, maxDriftX);
-    const driftY = randomFloat(-maxDriftY, maxDriftY);
+    // Calculate safe distance from edges, then multiply by 3 for wider but safe wandering
+    const safeX = Math.min(left, maxLeft - left);
+    const safeY = Math.min(top, maxTop - top);
+    const driftX = Math.min(safeX / 3, 30) * 3 * (Math.random() < 0.5 ? -1 : 1);
+    const driftY = Math.min(safeY / 3, 30) * 3 * (Math.random() < 0.5 ? -1 : 1);
 
     const animName = "float" + Math.floor(Math.random() * 100000);
 

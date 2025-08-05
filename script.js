@@ -11,8 +11,8 @@ function createBubble(text) {
     bubble.className = "bubble";
     bubble.textContent = text;
 
-    const minSize = 130;  // Increased to ensure long text like "Tight Chest" fits
-    const maxSize = 180;  // Allow more variation in large bubble size
+    const minSize = 130;
+    const maxSize = 180;
     const size = randomFloat(minSize, maxSize);
     Object.assign(bubble.style, {
         width: size + "px",
@@ -27,17 +27,13 @@ function createBubble(text) {
         alignItems: "center",
         justifyContent: "center",
         flexWrap: "wrap",
-        animation: `float ${randomFloat(3, 6)}s linear infinite`,
+        animation: `gentleFloat ${randomFloat(8, 15)}s ease-in-out infinite`,
         animationDelay: randomFloat(0, 2) + "s",
-        top: "100%",
-        left: randomFloat(10, 90) + "%",
+        top: randomFloat(10, 80) + "%",
+        left: randomFloat(10, 80) + "%",
     });
 
     container.appendChild(bubble);
-
-    setTimeout(() => {
-        bubble.style.top = randomFloat(10, 80) + "%";
-    }, 100);
 
     bubble.addEventListener("click", () => popBubble(bubble, text));
 }

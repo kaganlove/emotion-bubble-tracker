@@ -41,21 +41,21 @@ function createBubble(text) {
 
     container.appendChild(bubble);
 
-    let vx = randomFloat(-1, 1);
-    let vy = randomFloat(-1, 1);
-    let targetVX = randomFloat(-1, 1);
-    let targetVY = randomFloat(-1, 1);
-    let interpolationFactor = 0.01; // how quickly direction changes
+    let vx = randomFloat(-0.3, 0.3);
+    let vy = randomFloat(-0.3, 0.3);
+    let targetVX = randomFloat(-0.5, 0.5);
+    let targetVY = randomFloat(-0.5, 0.5);
+    let interpolationFactor = 0.005; // slower turning
 
     function updateDirection() {
-        targetVX = randomFloat(-1, 1);
-        targetVY = randomFloat(-1, 1);
+        targetVX = randomFloat(-0.5, 0.5);
+        targetVY = randomFloat(-0.5, 0.5);
     }
 
-    setInterval(updateDirection, 2000); // change direction every 2 seconds
+    setInterval(updateDirection, 4000); // change direction less frequently
 
     function animateBubble() {
-        // interpolate toward new target direction
+        // Interpolate gently toward new drift target
         vx += (targetVX - vx) * interpolationFactor;
         vy += (targetVY - vy) * interpolationFactor;
 

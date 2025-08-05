@@ -41,24 +41,28 @@ function createBubble(text) {
 
     container.appendChild(bubble);
 
-    let angle = randomFloat(0, Math.PI * 2);
-    let speed = randomFloat(0.3, 1);
-    let directionChangeTimer = 0;
+    let vx = randomFloat(-1, 1);
+    let vy = randomFloat(-1, 1);
+    let targetVX = randomFloat(-1, 1);
+    let targetVY = randomFloat(-1, 1);
+    let interpolationFactor = 0.01; // how quickly direction changes
+
+    function updateDirection() {
+        targetVX = randomFloat(-1, 1);
+        targetVY = randomFloat(-1, 1);
+    }
+
+    setInterval(updateDirection, 2000); // change direction every 2 seconds
 
     function animateBubble() {
-        // Smoothly wander by gradually changing angle
-        directionChangeTimer++;
-        if (directionChangeTimer > 120) {
-            angle += randomFloat(-0.5, 0.5);
-            speed = randomFloat(0.3, 1);
-            directionChangeTimer = 0;
-        }
+        // interpolate toward new target direction
+        vx += (targetVX - vx) * interpolationFactor;
+        vy += (targetVY - vy) * interpolationFactor;
 
-        // Update position
-        x += Math.cos(angle) * speed;
-        y += Math.sin(angle) * speed;
+        x += vx;
+        y += vy;
 
-        // Clamp to viewport boundaries
+        // Clamp to screen bounds
         x = Math.max(bubbleHalf, Math.min(viewportWidth - bubbleHalf, x));
         y = Math.max(bubbleHalf, Math.min(viewportHeight - bubbleHalf, y));
 

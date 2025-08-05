@@ -3,13 +3,18 @@ body {
     margin: 0;
     padding: 0;
     font-family: sans-serif;
-    background: linear-gradient(to bottom right, #b0f28f, #a2f4c7);
+    background: linear-gradient(to bottom right, #c6d5ea, #e3eaf3);
     overflow: hidden;
     text-align: center;
 }
 h1 {
-    margin-top: 30px;
-    color: #222;
+    margin-top: 80px;
+    color: #545454;
+    font-size: 1.8em;
+}
+#logo {
+    width: 100px;
+    margin-top: 20px;
 }
 #bubble-container {
     position: relative;
@@ -20,9 +25,10 @@ h1 {
 .bubble {
     position: absolute;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.7);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    background: rgba(118, 158, 228, 0.75);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
     font-weight: bold;
+    color: #fff;
     cursor: pointer;
     text-align: center;
     display: flex;
@@ -46,8 +52,8 @@ h1 {
 }
 .splat-message {
     position: fixed;
-    background-color: rgba(255, 255, 200, 0.9);
-    border: 2px solid #555;
+    background-color: rgba(240, 250, 255, 0.9);
+    border: 2px solid #769ee4;
     border-radius: 50%;
     font-weight: bold;
     z-index: 1000;
@@ -56,6 +62,8 @@ h1 {
     align-items: center;
     justify-content: center;
     text-align: center;
+    padding: 10px;
+    color: #545454;
 }
 @keyframes fadeOut {
     0% { opacity: 1; }
@@ -65,7 +73,19 @@ h1 {
     position: fixed;
     width: 10px;
     height: 10px;
-    background: hotpink;
+    background: #769ee4;
     border-radius: 50%;
     z-index: 1000;
+}
+@media (max-width: 600px) {
+    h1 {
+        font-size: 1.2em;
+        margin-top: 60px;
+    }
+    .bubble {
+        font-size: 14px;
+        padding: 8px;
+        min-width: 110px;
+        min-height: 110px;
+    }
 }

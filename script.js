@@ -19,9 +19,8 @@ function createBubble(text) {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    // Start somewhere in the visible area
-    const left = randomFloat(bubbleHalf, viewportWidth - bubbleHalf);
-    const top = randomFloat(bubbleHalf, viewportHeight - bubbleHalf);
+    let x = randomFloat(bubbleHalf, viewportWidth - bubbleHalf);
+    let y = randomFloat(bubbleHalf, viewportHeight - bubbleHalf);
 
     Object.assign(bubble.style, {
         width: size + "px",
@@ -36,24 +35,36 @@ function createBubble(text) {
         alignItems: "center",
         justifyContent: "center",
         flexWrap: "wrap",
-        left: `${left}px`,
-        top: `${top}px`,
-        transition: "transform 2s ease-in-out"
+        left: `${x - bubbleHalf}px`,
+        top: `${y - bubbleHalf}px`
     });
 
     container.appendChild(bubble);
 
-    // Random circular movement around initial position
-    let angle = 0;
-    const direction = Math.random() < 0.5 ? 1 : -1; // clockwise or counter-clockwise
-    const speed = randomFloat(0.005, 0.03); // slower to faster movement
-    const radius = Math.min(60, viewportWidth / 6, viewportHeight / 6);
+    let angle = randomFloat(0, Math.PI * 2);
+    let speed = randomFloat(0.3, 1);
+    let directionChangeTimer = 0;
 
     function animateBubble() {
-        angle += direction * speed;
-        const x = Math.cos(angle) * radius;
-        const y = Math.sin(angle) * radius;
-        bubble.style.transform = `translate(${x}px, ${y}px)`;
+        // Smoothly wander by gradually changing angle
+        directionChangeTimer++;
+        if (directionChangeTimer > 120) {
+            angle += randomFloat(-0.5, 0.5);
+            speed = randomFloat(0.3, 1);
+            directionChangeTimer = 0;
+        }
+
+        // Update position
+        x += Math.cos(angle) * speed;
+        y += Math.sin(angle) * speed;
+
+        // Clamp to viewport boundaries
+        x = Math.max(bubbleHalf, Math.min(viewportWidth - bubbleHalf, x));
+        y = Math.max(bubbleHalf, Math.min(viewportHeight - bubbleHalf, y));
+
+        bubble.style.left = `${x - bubbleHalf}px`;
+        bubble.style.top = `${y - bubbleHalf}px`;
+
         requestAnimationFrame(animateBubble);
     }
 

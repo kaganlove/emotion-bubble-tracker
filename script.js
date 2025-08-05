@@ -14,6 +14,35 @@ function createBubble(text) {
     const minSize = 130;
     const maxSize = 180;
     const size = randomFloat(minSize, maxSize);
+    const bubbleHalf = size / 2;
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Confine initial position to visible area
+    const top = randomFloat(bubbleHalf, viewportHeight - bubbleHalf);
+    const left = randomFloat(bubbleHalf, viewportWidth - bubbleHalf);
+
+    // Calculate drift while keeping within bounds
+    const maxDriftX = Math.min(30, viewportWidth - left - bubbleHalf, left - bubbleHalf);
+    const maxDriftY = Math.min(30, viewportHeight - top - bubbleHalf, top - bubbleHalf);
+    const driftX = randomFloat(-maxDriftX, maxDriftX);
+    const driftY = randomFloat(-maxDriftY, maxDriftY);
+
+    const animName = "float" + Math.floor(Math.random() * 100000);
+
+    const styleSheet = document.styleSheets[0];
+    const keyframes = `
+        @keyframes ${animName} {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(${driftX}px, ${driftY / 2}px); }
+            50% { transform: translate(${-driftX}px, ${-driftY}px); }
+            75% { transform: translate(${driftX / 2}px, ${driftY}px); }
+            100% { transform: translate(0, 0); }
+        }
+    `;
+    styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+
     Object.assign(bubble.style, {
         width: size + "px",
         height: size + "px",
@@ -27,14 +56,13 @@ function createBubble(text) {
         alignItems: "center",
         justifyContent: "center",
         flexWrap: "wrap",
-        animation: `gentleFloat ${randomFloat(8, 15)}s ease-in-out infinite`,
+        top: `${top}px`,
+        left: `${left}px`,
+        animation: `${animName} ${randomFloat(10, 20)}s ease-in-out infinite`,
         animationDelay: randomFloat(0, 2) + "s",
-        top: randomFloat(10, 80) + "%",
-        left: randomFloat(10, 80) + "%",
     });
 
     container.appendChild(bubble);
-
     bubble.addEventListener("click", () => popBubble(bubble, text));
 }
 

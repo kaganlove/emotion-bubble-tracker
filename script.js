@@ -19,31 +19,9 @@ function createBubble(text) {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    // Confine initial position to visible area
-    const maxLeft = viewportWidth - size;
-    const maxTop = viewportHeight - size;
-    const top = randomFloat(0, maxTop);
-    const left = randomFloat(0, maxLeft);
-
-    // Calculate safe distance from edges, then multiply by 3 for wider but safe wandering
-    const safeX = Math.min(left, maxLeft - left);
-    const safeY = Math.min(top, maxTop - top);
-    const driftX = Math.min(safeX / 3, 30) * 3 * (Math.random() < 0.5 ? -1 : 1);
-    const driftY = Math.min(safeY / 3, 30) * 3 * (Math.random() < 0.5 ? -1 : 1);
-
-    const animName = "float" + Math.floor(Math.random() * 100000);
-
-    const styleSheet = document.styleSheets[0];
-    const keyframes = `
-        @keyframes ${animName} {
-            0% { transform: translate(0, 0); }
-            25% { transform: translate(${driftX}px, ${driftY / 2}px); }
-            50% { transform: translate(${-driftX}px, ${-driftY}px); }
-            75% { transform: translate(${driftX / 2}px, ${driftY}px); }
-            100% { transform: translate(0, 0); }
-        }
-    `;
-    styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+    // Start somewhere in the visible area
+    const left = randomFloat(bubbleHalf, viewportWidth - bubbleHalf);
+    const top = randomFloat(bubbleHalf, viewportHeight - bubbleHalf);
 
     Object.assign(bubble.style, {
         width: size + "px",
@@ -53,18 +31,34 @@ function createBubble(text) {
         fontSize: "16px",
         textAlign: "center",
         borderRadius: "50%",
-        position: "absolute",
+        position: "fixed",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         flexWrap: "wrap",
-        top: `${top}px`,
         left: `${left}px`,
-        animation: `${animName} ${randomFloat(10, 20)}s ease-in-out infinite`,
-        animationDelay: randomFloat(0, 2) + "s",
+        top: `${top}px`,
+        transition: "transform 2s ease-in-out"
     });
 
     container.appendChild(bubble);
+
+    // Random circular movement around initial position
+    let angle = 0;
+    const direction = Math.random() < 0.5 ? 1 : -1; // clockwise or counter-clockwise
+    const speed = randomFloat(0.005, 0.03); // slower to faster movement
+    const radius = Math.min(60, viewportWidth / 6, viewportHeight / 6);
+
+    function animateBubble() {
+        angle += direction * speed;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        bubble.style.transform = `translate(${x}px, ${y}px)`;
+        requestAnimationFrame(animateBubble);
+    }
+
+    animateBubble();
+
     bubble.addEventListener("click", () => popBubble(bubble, text));
 }
 
@@ -88,7 +82,10 @@ function popBubble(bubble, text) {
     });
     document.body.appendChild(splat);
 
-    bubble.style.animation = "pop 0.4s forwards";
+    bubble.style.transition = "transform 0.4s ease-out, opacity 0.4s ease-out";
+    bubble.style.transform = "scale(0)";
+    bubble.style.opacity = "0";
+
     createParticles(rect.left + bubble.offsetWidth / 2, rect.top + bubble.offsetHeight / 2);
 
     setTimeout(() => {

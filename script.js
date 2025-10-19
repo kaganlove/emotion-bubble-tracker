@@ -1,139 +1,192 @@
+import { db } from './firebase.js';
+import {
+  collection,
+  addDoc,
+  serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
+// -----------------------------------------------------
+//  USER SETUP
+// -----------------------------------------------------
+let userAlias = localStorage.getItem('alias');
+
+// Ask user for alias if not stored
+if (!userAlias) {
+  userAlias = prompt("Pick a nickname for your session (e.g., FeatherFox)");
+  if (userAlias) {
+    localStorage.setItem('alias', userAlias);
+  } else {
+    alert("Alias required to track your entries.");
+  }
+}
+
+// -----------------------------------------------------
+//  BUBBLE LOGIC
+// -----------------------------------------------------
 const emotions = ["Tense", "Floaty", "Numb", "Jittery", "Tight Chest", "Sad"];
 const container = document.getElementById("bubble-container");
 
 function randomFloat(min, max) {
-    return Math.random() * (max - min) + min;
+  return Math.random() * (max - min) + min;
 }
 
 function createBubble(text) {
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
-    bubble.textContent = text;
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = text;
 
-    const minSize = 130;
-    const maxSize = 180;
-    const size = randomFloat(minSize, maxSize);
-    const bubbleHalf = size / 2;
+  const minSize = 130;
+  const maxSize = 180;
+  const size = randomFloat(minSize, maxSize);
+  const bubbleHalf = size / 2;
 
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
 
-    let x = randomFloat(bubbleHalf, viewportWidth - bubbleHalf);
-    let y = randomFloat(bubbleHalf, viewportHeight - bubbleHalf);
+  let x = randomFloat(bubbleHalf, viewportWidth - bubbleHalf);
+  let y = randomFloat(bubbleHalf, viewportHeight - bubbleHalf);
 
-    Object.assign(bubble.style, {
-        width: size + "px",
-        height: size + "px",
-        lineHeight: "normal",
-        padding: "10px",
-        fontSize: "16px",
-        textAlign: "center",
-        borderRadius: "50%",
-        position: "fixed",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexWrap: "wrap",
-        left: `${x - bubbleHalf}px`,
-        top: `${y - bubbleHalf}px`
-    });
+  Object.assign(bubble.style, {
+    width: size + "px",
+    height: size + "px",
+    lineHeight: "normal",
+    padding: "10px",
+    fontSize: "16px",
+    textAlign: "center",
+    borderRadius: "50%",
+    position: "fixed",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexWrap: "wrap",
+    left: `${x - bubbleHalf}px`,
+    top: `${y - bubbleHalf}px`
+  });
 
-    container.appendChild(bubble);
+  container.appendChild(bubble);
 
-    let vx = randomFloat(-0.3, 0.3);
-    let vy = randomFloat(-0.3, 0.3);
-    let targetVX = randomFloat(-0.5, 0.5);
-    let targetVY = randomFloat(-0.5, 0.5);
-    let interpolationFactor = 0.005; // slower turning
+  let vx = randomFloat(-0.3, 0.3);
+  let vy = randomFloat(-0.3, 0.3);
+  let targetVX = randomFloat(-0.5, 0.5);
+  let targetVY = randomFloat(-0.5, 0.5);
+  let interpolationFactor = 0.005; // slower turning
 
-    function updateDirection() {
-        targetVX = randomFloat(-0.5, 0.5);
-        targetVY = randomFloat(-0.5, 0.5);
-    }
+  function updateDirection() {
+    targetVX = randomFloat(-0.5, 0.5);
+    targetVY = randomFloat(-0.5, 0.5);
+  }
 
-    setInterval(updateDirection, 4000); // change direction less frequently
+  setInterval(updateDirection, 4000);
 
-    function animateBubble() {
-        // Interpolate gently toward new drift target
-        vx += (targetVX - vx) * interpolationFactor;
-        vy += (targetVY - vy) * interpolationFactor;
+  function animateBubble() {
+    vx += (targetVX - vx) * interpolationFactor;
+    vy += (targetVY - vy) * interpolationFactor;
 
-        x += vx;
-        y += vy;
+    x += vx;
+    y += vy;
 
-        // Clamp to screen bounds
-        x = Math.max(bubbleHalf, Math.min(viewportWidth - bubbleHalf, x));
-        y = Math.max(bubbleHalf, Math.min(viewportHeight - bubbleHalf, y));
+    x = Math.max(bubbleHalf, Math.min(viewportWidth - bubbleHalf, x));
+    y = Math.max(bubbleHalf, Math.min(viewportHeight - bubbleHalf, y));
 
-        bubble.style.left = `${x - bubbleHalf}px`;
-        bubble.style.top = `${y - bubbleHalf}px`;
+    bubble.style.left = `${x - bubbleHalf}px`;
+    bubble.style.top = `${y - bubbleHalf}px`;
 
-        requestAnimationFrame(animateBubble);
-    }
+    requestAnimationFrame(animateBubble);
+  }
 
-    animateBubble();
+  animateBubble();
 
-    bubble.addEventListener("click", () => popBubble(bubble, text));
+  bubble.addEventListener("click", () => popBubble(bubble, text));
 }
 
-function popBubble(bubble, text) {
-    const audio = document.getElementById('pop-sound');
-    if (audio) audio.currentTime = 0, audio.play();
-    const rect = bubble.getBoundingClientRect();
-    const splat = document.createElement("div");
-    splat.className = "splat-message";
-    splat.textContent = `it's ok to feel ${text.toLowerCase()}`;
-    Object.assign(splat.style, {
-        position: "fixed",
-        left: rect.left + "px",
-        top: rect.top + "px",
-        width: bubble.offsetWidth + "px",
-        height: bubble.offsetHeight + "px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center"
+// -----------------------------------------------------
+//  POP & JOURNAL LOGIC
+// -----------------------------------------------------
+async function popBubble(bubble, text) {
+  const audio = document.getElementById('pop-sound');
+  if (audio) {
+    audio.currentTime = 0;
+    audio.play();
+  }
+
+  const rect = bubble.getBoundingClientRect();
+  const splat = document.createElement("div");
+  splat.className = "splat-message";
+  splat.textContent = `it's ok to feel ${text.toLowerCase()}`;
+  Object.assign(splat.style, {
+    position: "fixed",
+    left: rect.left + "px",
+    top: rect.top + "px",
+    width: bubble.offsetWidth + "px",
+    height: bubble.offsetHeight + "px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center"
+  });
+  document.body.appendChild(splat);
+
+  bubble.style.transition = "transform 0.4s ease-out, opacity 0.4s ease-out";
+  bubble.style.transform = "scale(0)";
+  bubble.style.opacity = "0";
+
+  createParticles(rect.left + bubble.offsetWidth / 2, rect.top + bubble.offsetHeight / 2);
+
+  // -------------------------------------------------
+  //  🔥 Save to Firestore
+  // -------------------------------------------------
+  const journal = prompt(`You popped "${text}". Want to journal this feeling? (optional)`);
+
+  try {
+    await addDoc(collection(db, "entries"), {
+      alias: userAlias,
+      emotion: text,
+      journal: journal || '',
+      timestamp: serverTimestamp()
     });
-    document.body.appendChild(splat);
+    console.log(`Saved to Firestore: ${text} → "${journal}"`);
+  } catch (e) {
+    console.error("Error saving to Firestore:", e);
+  }
 
-    bubble.style.transition = "transform 0.4s ease-out, opacity 0.4s ease-out";
-    bubble.style.transform = "scale(0)";
-    bubble.style.opacity = "0";
+  // Recreate bubble after short delay
+  setTimeout(() => {
+    bubble.remove();
+    createBubble(text);
+  }, 500);
+}
 
-    createParticles(rect.left + bubble.offsetWidth / 2, rect.top + bubble.offsetHeight / 2);
+// -----------------------------------------------------
+//  PARTICLE ANIMATION
+// -----------------------------------------------------
+function createParticles(x, y) {
+  for (let i = 0; i < 10; i++) {
+    const particle = document.createElement("div");
+    particle.className = "particle";
+    particle.style.position = "fixed";
+    particle.style.left = x + "px";
+    particle.style.top = y + "px";
+
+    const angle = Math.random() * 2 * Math.PI;
+    const distance = (Math.random() * 50 + 20) * 4;
+    const xMove = Math.cos(angle) * distance;
+    const yMove = Math.sin(angle) * distance;
+
+    document.body.appendChild(particle);
 
     setTimeout(() => {
-        bubble.remove();
-        createBubble(text);
-    }, 500);
+      particle.style.transition = "transform 0.6s ease-out, opacity 0.6s ease-out";
+      particle.style.transform = `translate(${xMove}px, ${yMove}px) scale(0)`;
+      particle.style.opacity = "0";
+    }, 10);
+
+    setTimeout(() => particle.remove(), 700);
+  }
 }
 
-function createParticles(x, y) {
-    for (let i = 0; i < 10; i++) {
-        const particle = document.createElement("div");
-        particle.className = "particle";
-        particle.style.position = "fixed";
-        particle.style.left = x + "px";
-        particle.style.top = y + "px";
-
-        const angle = Math.random() * 2 * Math.PI;
-        const distance = (Math.random() * 50 + 20) * 4;
-        const xMove = Math.cos(angle) * distance;
-        const yMove = Math.sin(angle) * distance;
-
-        document.body.appendChild(particle);
-
-        setTimeout(() => {
-            particle.style.transition = "transform 0.6s ease-out, opacity 0.6s ease-out";
-            particle.style.transform = `translate(${xMove}px, ${yMove}px) scale(0)`;
-            particle.style.opacity = "0";
-        }, 10);
-
-        setTimeout(() => particle.remove(), 700);
-    }
-}
-
+// -----------------------------------------------------
+//  INITIALIZE
+// -----------------------------------------------------
 emotions.forEach((emotion, i) => {
-    setTimeout(() => createBubble(emotion), i * 400);
+  setTimeout(() => createBubble(emotion), i * 400);
 });

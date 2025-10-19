@@ -1,128 +1,128 @@
-// Updated Stage 1 - Emotion Selector with Multi-Select
-// Keeps animation, sound, and now allows selecting multiple emotions
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-import { db } from './firebase.js';
-import {
-  collection,
-  addDoc,
-  serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "XXXXXX",
+  appId: "YOUR_APP_ID"
+};
 
-let userAlias = localStorage.getItem('alias');
-if (!userAlias) {
-  userAlias = prompt("Pick a nickname for your session (e.g., FeatherFox)");
-  if (userAlias) {
-    localStorage.setItem('alias', userAlias);
-  } else {
-    alert("Alias required to track your entries.");
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+signInAnonymously(auth);
+
+const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
+
+const bubbleContainer = document.getElementById("bubble-container");
+const nextButton = document.getElementById("next-button");
+const popSound = document.getElementById("pop-sound");
+
+const emotions = ["Happy", "Sad", "Angry", "Fear", "Disgust", "Surprise"];
+let selectedEmotions = [];
+
+const engine = Engine.create();
+const render = Render.create({
+  element: bubbleContainer,
+  engine: engine,
+  options: {
+    width: window.innerWidth,
+    height: bubbleContainer.offsetHeight,
+    wireframes: false,
+    background: 'transparent'
   }
-}
-
-const emotions = ["Happy", "Sad", "Anger", "Disgust", "Fear", "Surprise"];
-const container = document.getElementById("bubble-container");
-const selectedEmotions = new Set();
-
-function randomFloat(min, max) {
-  return Math.random() * (max - min) + min;
-}
-
-function createBubble(text) {
-  const bubble = document.createElement("div");
-  bubble.className = "bubble";
-  bubble.textContent = text;
-
-  const minSize = 130;
-  const maxSize = 180;
-  const size = randomFloat(minSize, maxSize);
-  const bubbleHalf = size / 2;
-
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-
-  let x = randomFloat(bubbleHalf, viewportWidth - bubbleHalf);
-  let y = randomFloat(bubbleHalf, viewportHeight - bubbleHalf);
-
-  Object.assign(bubble.style, {
-    width: size + "px",
-    height: size + "px",
-    lineHeight: "normal",
-    padding: "10px",
-    fontSize: "16px",
-    textAlign: "center",
-    borderRadius: "50%",
-    position: "fixed",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexWrap: "wrap",
-    left: `${x - bubbleHalf}px`,
-    top: `${y - bubbleHalf}px`
-  });
-
-  container.appendChild(bubble);
-
-  let vx = randomFloat(-0.3, 0.3);
-  let vy = randomFloat(-0.3, 0.3);
-  let targetVX = randomFloat(-0.5, 0.5);
-  let targetVY = randomFloat(-0.5, 0.5);
-  let interpolationFactor = 0.005;
-
-  function updateDirection() {
-    targetVX = randomFloat(-0.5, 0.5);
-    targetVY = randomFloat(-0.5, 0.5);
-  }
-  setInterval(updateDirection, 4000);
-
-  function animateBubble() {
-    vx += (targetVX - vx) * interpolationFactor;
-    vy += (targetVY - vy) * interpolationFactor;
-    x += vx;
-    y += vy;
-    x = Math.max(bubbleHalf, Math.min(viewportWidth - bubbleHalf, x));
-    y = Math.max(bubbleHalf, Math.min(viewportHeight - bubbleHalf, y));
-    bubble.style.left = `${x - bubbleHalf}px`;
-    bubble.style.top = `${y - bubbleHalf}px`;
-    requestAnimationFrame(animateBubble);
-  }
-  animateBubble();
-
-  bubble.addEventListener("click", () => toggleSelection(bubble, text));
-}
-
-function toggleSelection(bubble, text) {
-  const audio = document.getElementById('pop-sound');
-  if (audio) {
-    audio.currentTime = 0;
-    audio.play();
-  }
-  if (selectedEmotions.has(text)) {
-    selectedEmotions.delete(text);
-    bubble.classList.remove("selected");
-  } else {
-    selectedEmotions.add(text);
-    bubble.classList.add("selected");
-  }
-  console.log("Selected:", Array.from(selectedEmotions));
-}
-
-function createNextButton() {
-  const button = document.createElement("button");
-  button.textContent = "Next";
-  button.className = "next-button";
-  document.body.appendChild(button);
-
-  button.addEventListener("click", () => {
-    if (selectedEmotions.size === 0) {
-      alert("Please select at least one emotion before continuing.");
-      return;
-    }
-    localStorage.setItem("stage1Emotions", JSON.stringify(Array.from(selectedEmotions)));
-    window.location.href = "stage2.html";
-  });
-}
-
-emotions.forEach((emotion, i) => {
-  setTimeout(() => createBubble(emotion), i * 400);
 });
 
-createNextButton();
+Render.run(render);
+Runner.run(Runner.create(), engine);
+
+function createBubble(x, y, label) {
+  const radius = 60 + Math.random() * 20;
+
+  const bubble = Bodies.circle(x, y, radius, {
+    label,
+    restitution: 0.9,
+    render: {
+      fillStyle: "#cce5f6"
+    }
+  });
+
+  bubble.custom = {
+    selected: false,
+    element: createBubbleElement(label, radius)
+  };
+
+  Composite.add(engine.world, bubble);
+  return bubble;
+}
+
+function createBubbleElement(text, size) {
+  const el = document.createElement("div");
+  el.classList.add("bubble");
+  el.style.width = `${size * 2}px`;
+  el.style.height = `${size * 2}px`;
+  el.textContent = text;
+
+  el.addEventListener("click", () => {
+    el.classList.toggle("selected");
+    popSound.currentTime = 0;
+    popSound.play();
+
+    if (selectedEmotions.includes(text)) {
+      selectedEmotions = selectedEmotions.filter(e => e !== text);
+    } else {
+      selectedEmotions.push(text);
+    }
+
+    console.log("Selected:", selectedEmotions);
+  });
+
+  bubbleContainer.appendChild(el);
+  return el;
+}
+
+// Create walls so bubbles bounce off edges
+const width = window.innerWidth;
+const height = bubbleContainer.offsetHeight;
+const wallThickness = 100;
+
+Composite.add(engine.world, [
+  Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }),
+  Bodies.rectangle(width / 2, height + wallThickness / 2, width, wallThickness, { isStatic: true }),
+  Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }),
+  Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true })
+]);
+
+// Create bubbles
+const bubbles = emotions.map(() => {
+  const x = Math.random() * (width - 100) + 50;
+  const y = Math.random() * (height - 100) + 50;
+  return createBubble(x, y, emotions[bubbles?.length]);
+});
+
+Events.on(engine, "afterUpdate", () => {
+  for (let body of Composite.allBodies(engine.world)) {
+    if (body.custom && body.custom.element) {
+      const { position } = body;
+      body.custom.element.style.left = `${position.x - body.circleRadius}px`;
+      body.custom.element.style.top = `${position.y - body.circleRadius}px`;
+    }
+  }
+});
+
+nextButton.addEventListener("click", () => {
+  if (selectedEmotions.length === 0) return alert("Pick at least one.");
+
+  const dbRef = ref(db, "entries");
+  push(dbRef, {
+    timestamp: new Date().toISOString(),
+    emotions: selectedEmotions
+  });
+
+  alert("Next phase would start here!");
+});

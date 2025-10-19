@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+// Firebase Config
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -12,11 +13,13 @@ const firebaseConfig = {
   appId: "YOUR_APP_ID"
 };
 
+// Init Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 signInAnonymously(auth);
 
+// Matter.js setup
 const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
 const bubbleContainer = document.getElementById("bubble-container");
@@ -27,33 +30,33 @@ const emotions = ["Happy", "Sad", "Angry", "Fear", "Disgust", "Surprise"];
 let selectedEmotions = [];
 
 const engine = Engine.create();
+const width = window.innerWidth;
+const height = window.innerHeight * 0.75;
+
 const render = Render.create({
   element: bubbleContainer,
   engine: engine,
   options: {
-    width: window.innerWidth,
-    height: bubbleContainer.offsetHeight,
+    width,
+    height,
     wireframes: false,
-    background: 'transparent'
+    background: "transparent"
   }
 });
 
 Render.run(render);
 Runner.run(Runner.create(), engine);
 
-// Wall setup
-const width = window.innerWidth;
-const height = window.innerHeight * 0.75;
+// Walls
 const wallThickness = 100;
-
 Composite.add(engine.world, [
-  Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }), // top
+  Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }),   // top
   Bodies.rectangle(width / 2, height + wallThickness / 2, width, wallThickness, { isStatic: true }), // bottom
   Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }), // left
-  Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }) // right
+  Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true })  // right
 ]);
 
-// Create bubbles with random positioning and floating force
+// Create bubble
 function createBubble(label) {
   const radius = 60 + Math.random() * 20;
   const x = Math.random() * (width - radius * 2) + radius;
@@ -76,6 +79,7 @@ function createBubble(label) {
   return bubble;
 }
 
+// Create matching HTML element for bubble
 function createBubbleElement(text, size) {
   const el = document.createElement("div");
   el.classList.add("bubble");
@@ -84,15 +88,12 @@ function createBubbleElement(text, size) {
   el.textContent = text;
 
   el.addEventListener("click", () => {
-    // Play sound
     popSound.currentTime = 0;
     popSound.play();
 
-    // Animate burst
     el.classList.add("pop-anim");
     setTimeout(() => el.classList.remove("pop-anim"), 300);
 
-    // Toggle selection
     const alreadySelected = selectedEmotions.includes(text);
     if (alreadySelected) {
       selectedEmotions = selectedEmotions.filter(e => e !== text);
@@ -101,21 +102,19 @@ function createBubbleElement(text, size) {
       selectedEmotions.push(text);
       el.classList.add("selected");
     }
-
-    console.log("Selected:", selectedEmotions);
   });
 
   bubbleContainer.appendChild(el);
   return el;
 }
 
-// Spawn bubbles
-const bubbles = emotions.map(emotion => createBubble(emotion));
+// Create all bubbles
+emotions.map(emotion => createBubble(emotion));
 
-// Sync position of divs with Matter.js bodies
+// Sync DOM with Matter.js
 Events.on(engine, "afterUpdate", () => {
-  for (let body of Composite.allBodies(engine.world)) {
-    if (body.custom && body.custom.element) {
+  for (const body of Composite.allBodies(engine.world)) {
+    if (body.custom?.element) {
       const { position } = body;
       const el = body.custom.element;
       const r = body.circleRadius;
@@ -123,14 +122,14 @@ Events.on(engine, "afterUpdate", () => {
       el.style.left = `${position.x - r}px`;
       el.style.top = `${position.y - r}px`;
 
-      // Apply gentle drifting force to simulate floating
-      const xForce = (Math.random() - 0.5) * 0.002;
-      const yForce = (Math.random() - 0.5) * 0.002;
+      const xForce = (Math.random() - 0.5) * 0.0005;
+      const yForce = (Math.random() - 0.5) * 0.0003;
       Body.applyForce(body, body.position, { x: xForce, y: yForce });
     }
   }
 });
 
+// Submit emotions
 nextButton.addEventListener("click", () => {
   if (selectedEmotions.length === 0) return alert("Pick at least one.");
 

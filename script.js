@@ -99,10 +99,13 @@ Composite.add(engine.world, [
 ]);
 
 // Create bubbles
-const bubbles = emotions.map(() => {
-  const x = Math.random() * (width - 100) + 50;
-  const y = Math.random() * (height - 100) + 50;
-  return createBubble(x, y, emotions[bubbles?.length]);
+const spacingX = width / (emotions.length + 1);
+const spacingY = height / 3;
+
+const bubbles = emotions.map((emotion, i) => {
+  const x = spacingX * (i + 1);
+  const y = spacingY + Math.random() * 40; // small Y variance
+  return createBubble(x, y, emotion);
 });
 
 Events.on(engine, "afterUpdate", () => {

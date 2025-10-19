@@ -107,7 +107,7 @@ function toggleSelection(bubble, text) {
 
 function createNextButton() {
   const button = document.createElement("button");
-  button.textContent = "Next → Pick Specific Feelings";
+  button.textContent = "Next";
   button.className = "next-button";
   document.body.appendChild(button);
 

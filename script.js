@@ -43,7 +43,7 @@ Runner.run(Runner.create(), engine);
 
 // Wall setup
 const width = window.innerWidth;
-const height = bubbleContainer.offsetHeight;
+const height = window.innerHeight * 0.75;
 const wallThickness = 100;
 
 Composite.add(engine.world, [

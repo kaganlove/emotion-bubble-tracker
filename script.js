@@ -68,19 +68,28 @@ function createBubbleElement(text, size) {
   el.style.height = `${size * 2}px`;
   el.textContent = text;
 
-  el.addEventListener("click", () => {
-    el.classList.toggle("selected");
-    popSound.currentTime = 0;
-    popSound.play();
+el.addEventListener("click", () => {
+  // Play pop sound
+  popSound.currentTime = 0;
+  popSound.play();
 
-    if (selectedEmotions.includes(text)) {
-      selectedEmotions = selectedEmotions.filter(e => e !== text);
-    } else {
-      selectedEmotions.push(text);
-    }
+  // Toggle selection state
+  el.classList.toggle("selected");
 
-    console.log("Selected:", selectedEmotions);
-  });
+  // Add quick pop animation
+  el.classList.add("pop-anim");
+  setTimeout(() => el.classList.remove("pop-anim"), 300);
+
+  // Track selected emotions
+  if (selectedEmotions.includes(text)) {
+    selectedEmotions = selectedEmotions.filter(e => e !== text);
+  } else {
+    selectedEmotions.push(text);
+  }
+
+  console.log("Selected:", selectedEmotions);
+});
+
 
   bubbleContainer.appendChild(el);
   return el;

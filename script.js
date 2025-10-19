@@ -1,19 +1,18 @@
+// Firebase imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// Firebase Config
+// ✅ Only one initializeApp — this was duplicated in your version
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "XXXXXX",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDeZj176_uisu7cbOJAUBDKaFQ_60ZsMnY",
+  authDomain: "bubbletracker-2565f.firebaseapp.com",
+  projectId: "bubbletracker-2565f",
+  storageBucket: "bubbletracker-2565f.appspot.com", // fixed .app typo
+  messagingSenderId: "332012322785",
+  appId: "1:332012322785:web:3979fafee9536800491ca0"
 };
 
-// Init Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
@@ -35,7 +34,7 @@ const height = window.innerHeight * 0.75;
 
 const render = Render.create({
   element: bubbleContainer,
-  engine: engine,
+  engine,
   options: {
     width,
     height,
@@ -47,16 +46,15 @@ const render = Render.create({
 Render.run(render);
 Runner.run(Runner.create(), engine);
 
-// Walls
+// Wall boundaries
 const wallThickness = 100;
 Composite.add(engine.world, [
-  Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }),   // top
-  Bodies.rectangle(width / 2, height + wallThickness / 2, width, wallThickness, { isStatic: true }), // bottom
-  Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }), // left
-  Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true })  // right
+  Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }),
+  Bodies.rectangle(width / 2, height + wallThickness / 2, width, wallThickness, { isStatic: true }),
+  Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }),
+  Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true })
 ]);
 
-// Create bubble
 function createBubble(label) {
   const radius = 60 + Math.random() * 20;
   const x = Math.random() * (width - radius * 2) + radius;
@@ -79,7 +77,6 @@ function createBubble(label) {
   return bubble;
 }
 
-// Create matching HTML element for bubble
 function createBubbleElement(text, size) {
   const el = document.createElement("div");
   el.classList.add("bubble");
@@ -108,10 +105,10 @@ function createBubbleElement(text, size) {
   return el;
 }
 
-// Create all bubbles
-emotions.map(emotion => createBubble(emotion));
+// Spawn bubbles
+emotions.forEach(emotion => createBubble(emotion));
 
-// Sync DOM with Matter.js
+// Keep DOM in sync with physics
 Events.on(engine, "afterUpdate", () => {
   for (const body of Composite.allBodies(engine.world)) {
     if (body.custom?.element) {
@@ -129,7 +126,7 @@ Events.on(engine, "afterUpdate", () => {
   }
 });
 
-// Submit emotions
+// Handle submission
 nextButton.addEventListener("click", () => {
   if (selectedEmotions.length === 0) return alert("Pick at least one.");
 

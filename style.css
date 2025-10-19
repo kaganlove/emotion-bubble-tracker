@@ -1,11 +1,11 @@
 body {
   margin: 0;
   padding: 0;
-  overflow: hidden;
   font-family: 'Segoe UI', sans-serif;
   background: linear-gradient(to bottom, #a9cde3, #dceaf6);
   color: #333;
   text-align: center;
+  overflow: hidden;
 }
 
 #logo {
@@ -38,23 +38,17 @@ h1 {
   font-size: 1.1em;
   user-select: none;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100px;
+  height: 100px;
   animation: float 6s ease-in-out infinite;
+  transition: transform 0.2s ease;
 }
 
-/* Selection style: subtle glow instead of thick outline */
 .bubble.selected {
   background-color: #93d5ec;
-  box-shadow: 0 0 10px rgba(21, 62, 83, 0.5);
-  filter: brightness(1.1);
+  outline: 3px solid #285f7a;
 }
 
-/* Pop animation trigger class */
-.bubble.pop-anim {
-  animation: pop 0.3s ease-out;
-}
-
-/* Button at bottom center */
 #next-button {
   position: absolute;
   bottom: 20px;
@@ -67,18 +61,17 @@ h1 {
   background-color: #285f7a;
   color: white;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-/* Popping visual effect */
 @keyframes pop {
   0% {
     transform: scale(1);
     opacity: 1;
   }
   50% {
-    transform: scale(1.5);
-    opacity: 0.2;
+    transform: scale(1.6);
+    opacity: 0.3;
   }
   100% {
     transform: scale(1);
@@ -86,11 +79,14 @@ h1 {
   }
 }
 
-/* Floating bubble movement */
+.bubble.pop-anim {
+  animation: pop 0.3s ease-out;
+}
+
 @keyframes float {
-  0%   { transform: translate(0, 0) rotate(0deg); }
-  25%  { transform: translate(-10px, 15px) rotate(2deg); }
-  50%  { transform: translate(5px, -10px) rotate(-2deg); }
-  75%  { transform: translate(-15px, 5px) rotate(1deg); }
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-10px, 15px) rotate(2deg); }
+  50% { transform: translate(10px, -10px) rotate(-2deg); }
+  75% { transform: translate(-5px, 10px) rotate(1deg); }
   100% { transform: translate(0, 0) rotate(0deg); }
 }

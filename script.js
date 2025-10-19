@@ -17,7 +17,7 @@ const db = getDatabase(app);
 const auth = getAuth(app);
 signInAnonymously(auth);
 
-const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
+const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
 const bubbleContainer = document.getElementById("bubble-container");
 const nextButton = document.getElementById("next-button");
@@ -41,20 +41,35 @@ const render = Render.create({
 Render.run(render);
 Runner.run(Runner.create(), engine);
 
-function createBubble(x, y, label) {
+// Wall setup
+const width = window.innerWidth;
+const height = bubbleContainer.offsetHeight;
+const wallThickness = 100;
+
+Composite.add(engine.world, [
+  Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }), // top
+  Bodies.rectangle(width / 2, height + wallThickness / 2, width, wallThickness, { isStatic: true }), // bottom
+  Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }), // left
+  Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }) // right
+]);
+
+// Create bubbles with random positioning and floating force
+function createBubble(label) {
   const radius = 60 + Math.random() * 20;
+  const x = Math.random() * (width - radius * 2) + radius;
+  const y = Math.random() * (height - radius * 2) + radius;
 
   const bubble = Bodies.circle(x, y, radius, {
     label,
     restitution: 0.9,
-    render: {
-      fillStyle: "#cce5f6"
-    }
+    frictionAir: 0.02,
+    render: { fillStyle: "#cce5f6" }
   });
 
   bubble.custom = {
     selected: false,
-    element: createBubbleElement(label, radius)
+    element: createBubbleElement(label, radius),
+    radius
   };
 
   Composite.add(engine.world, bubble);
@@ -68,61 +83,50 @@ function createBubbleElement(text, size) {
   el.style.height = `${size * 2}px`;
   el.textContent = text;
 
-el.addEventListener("click", () => {
-  // Play pop sound
-  popSound.currentTime = 0;
-  popSound.play();
+  el.addEventListener("click", () => {
+    // Play sound
+    popSound.currentTime = 0;
+    popSound.play();
 
-  // Toggle selection state
-  el.classList.toggle("selected");
+    // Animate burst
+    el.classList.add("pop-anim");
+    setTimeout(() => el.classList.remove("pop-anim"), 300);
 
-  // Add quick pop animation
-  el.classList.add("pop-anim");
-  setTimeout(() => el.classList.remove("pop-anim"), 300);
+    // Toggle selection
+    const alreadySelected = selectedEmotions.includes(text);
+    if (alreadySelected) {
+      selectedEmotions = selectedEmotions.filter(e => e !== text);
+      el.classList.remove("selected");
+    } else {
+      selectedEmotions.push(text);
+      el.classList.add("selected");
+    }
 
-  // Track selected emotions
-  if (selectedEmotions.includes(text)) {
-    selectedEmotions = selectedEmotions.filter(e => e !== text);
-  } else {
-    selectedEmotions.push(text);
-  }
-
-  console.log("Selected:", selectedEmotions);
-});
-
+    console.log("Selected:", selectedEmotions);
+  });
 
   bubbleContainer.appendChild(el);
   return el;
 }
 
-// Create walls so bubbles bounce off edges
-const width = window.innerWidth;
-const height = bubbleContainer.offsetHeight;
-const wallThickness = 100;
+// Spawn bubbles
+const bubbles = emotions.map(emotion => createBubble(emotion));
 
-Composite.add(engine.world, [
-  Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }),
-  Bodies.rectangle(width / 2, height + wallThickness / 2, width, wallThickness, { isStatic: true }),
-  Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }),
-  Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true })
-]);
-
-// Create bubbles
-const spacingX = width / (emotions.length + 1);
-const spacingY = height / 3;
-
-const bubbles = emotions.map((emotion, i) => {
-  const x = spacingX * (i + 1);
-  const y = spacingY + Math.random() * 40; // small Y variance
-  return createBubble(x, y, emotion);
-});
-
+// Sync position of divs with Matter.js bodies
 Events.on(engine, "afterUpdate", () => {
   for (let body of Composite.allBodies(engine.world)) {
     if (body.custom && body.custom.element) {
       const { position } = body;
-      body.custom.element.style.left = `${position.x - body.circleRadius}px`;
-      body.custom.element.style.top = `${position.y - body.circleRadius}px`;
+      const el = body.custom.element;
+      const r = body.circleRadius;
+
+      el.style.left = `${position.x - r}px`;
+      el.style.top = `${position.y - r}px`;
+
+      // Apply gentle drifting force to simulate floating
+      const xForce = (Math.random() - 0.5) * 0.002;
+      const yForce = (Math.random() - 0.5) * 0.002;
+      Body.applyForce(body, body.position, { x: xForce, y: yForce });
     }
   }
 });

@@ -3,7 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// Firebase Configuration
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDeZj176_uisu7cbOJAUBDKaFQ_60ZsMnY",
   authDomain: "bubbletracker-2565f.firebaseapp.com",
@@ -28,9 +28,9 @@ const popSound = document.getElementById("pop-sound");
 const emotions = ["Happy", "Sad", "Angry", "Fear", "Disgust", "Surprise"];
 let selectedEmotions = [];
 
-// Engine + Render
 const engine = Engine.create();
-engine.world.gravity.y = 0; // turn off falling gravity
+engine.gravity.y = 0; // Turn off gravity for floating
+
 const width = window.innerWidth;
 const height = window.innerHeight * 0.75;
 
@@ -48,7 +48,7 @@ const render = Render.create({
 Render.run(render);
 Runner.run(Runner.create(), engine);
 
-// Walls
+// Walls to bounce off
 const wallThickness = 100;
 Composite.add(engine.world, [
   Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }), // top
@@ -57,9 +57,16 @@ Composite.add(engine.world, [
   Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }) // right
 ]);
 
-// ---------------------------------------------------------
-// ✅ Create gently floating bubble
-// ---------------------------------------------------------
+// Drift velocity tracking map
+const driftMap = new Map();
+
+function getRandomVelocity() {
+  return {
+    x: (Math.random() - 0.5) * 1.5,
+    y: (Math.random() - 0.5) * 1.5
+  };
+}
+
 function createBubble(label) {
   const radius = 60 + Math.random() * 20;
   const x = Math.random() * (width - radius * 2) + radius;
@@ -68,7 +75,7 @@ function createBubble(label) {
   const bubble = Bodies.circle(x, y, radius, {
     label,
     restitution: 0.9,
-    frictionAir: 0.05,
+    frictionAir: 0.01,
     render: { fillStyle: "#cce5f6" }
   });
 
@@ -78,19 +85,11 @@ function createBubble(label) {
     radius
   };
 
-  // Set initial gentle drift
-  Body.setVelocity(bubble, {
-    x: (Math.random() - 0.5) * 1.5,
-    y: (Math.random() - 0.5) * 1.5
-  });
-
   Composite.add(engine.world, bubble);
+  driftMap.set(bubble, getRandomVelocity()); // assign random drift
   return bubble;
 }
 
-// ---------------------------------------------------------
-// ✅ Create Bubble DOM Element
-// ---------------------------------------------------------
 function createBubbleElement(text, size) {
   const el = document.createElement("div");
   el.classList.add("bubble");
@@ -119,43 +118,52 @@ function createBubbleElement(text, size) {
   return el;
 }
 
-// ---------------------------------------------------------
-// ✅ Spawn All Bubbles
-// ---------------------------------------------------------
+// Create bubbles
 emotions.forEach(emotion => createBubble(emotion));
 
-// ---------------------------------------------------------
-// ✅ Update Position + Random Drift Forces
-// ---------------------------------------------------------
+// DOM Sync + Motion Control
 Events.on(engine, "afterUpdate", () => {
   for (const body of Composite.allBodies(engine.world)) {
-    if (body.custom?.element) {
-      const el = body.custom.element;
-      const r = body.circleRadius;
-      const { x, y } = body.position;
+    if (!body.custom?.element) continue;
 
-      el.style.left = `${x - r}px`;
-      el.style.top = `${y - r}px`;
+    const el = body.custom.element;
+    const r = body.circleRadius;
+    const { x, y } = body.position;
 
-      // Tiny floating motion
-      const xForce = (Math.random() - 0.5) * 0.0002;
-      const yForce = (Math.random() - 0.5) * 0.0002;
-      Body.applyForce(body, body.position, { x: xForce, y: yForce });
+    el.style.left = `${x - r}px`;
+    el.style.top = `${y - r}px`;
 
-      // Optional: gentle push away from edges
-      if (y < 100) Body.applyForce(body, body.position, { x: 0, y: 0.0005 });
-      if (y > height - 100) Body.applyForce(body, body.position, { x: 0, y: -0.0005 });
-      if (x < 100) Body.applyForce(body, body.position, { x: 0.0005, y: 0 });
-      if (x > width - 100) Body.applyForce(body, body.position, { x: -0.0005, y: 0 });
+    const drift = driftMap.get(body);
+    if (!drift) continue;
+
+    // Apply velocity
+    Body.setVelocity(body, {
+      x: drift.x,
+      y: drift.y
+    });
+
+    // Bounce off edges by inverting drift
+    if (x < 100 || x > width - 100) drift.x *= -1;
+    if (y < 100 || y > height - 100) drift.y *= -1;
+
+    // Add small jitter to simulate randomness
+    if (Math.random() < 0.01) {
+      drift.x += (Math.random() - 0.5) * 0.2;
+      drift.y += (Math.random() - 0.5) * 0.2;
+      drift.x = Math.max(-1.5, Math.min(1.5, drift.x));
+      drift.y = Math.max(-1.5, Math.min(1.5, drift.y));
     }
+
+    driftMap.set(body, drift);
   }
 });
 
-// ---------------------------------------------------------
-// ✅ Handle Submission
-// ---------------------------------------------------------
+// Submit to Firebase
 nextButton.addEventListener("click", () => {
-  if (selectedEmotions.length === 0) return alert("Pick at least one.");
+  if (selectedEmotions.length === 0) {
+    alert("Pick at least one emotion.");
+    return;
+  }
 
   const dbRef = ref(db, "entries");
   push(dbRef, {

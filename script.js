@@ -49,7 +49,7 @@ const render = Render.create({
 Render.run(render);
 Runner.run(Runner.create(), engine);
 
-// Wall boundaries
+// Walls
 const wallThickness = 100;
 Composite.add(engine.world, [
   Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }),
@@ -62,12 +62,11 @@ Composite.add(engine.world, [
 const driftMap = new Map();
 function getRandomVelocity() {
   return {
-    x: (Math.random() - 0.5) * 2.5,
-    y: (Math.random() - 0.5) * 2.5
+    x: (Math.random() - 0.5) * 1.25,  // 50% speed
+    y: (Math.random() - 0.5) * 1.25
   };
 }
 
-// Create a bubble body
 function createBubble(label) {
   const radius = 60 + Math.random() * 20;
   const x = Math.random() * (width - 2 * radius) + radius;
@@ -75,20 +74,12 @@ function createBubble(label) {
 
   const bubble = Bodies.circle(x, y, radius, {
     label,
-    restitution: 1,
+    restitution: 0.95,
     friction: 0,
-    frictionAir: 0.02,
+    frictionAir: 0.01,
     slop: 0.01,
-    inertia: Infinity,
-    collisionFilter: {
-      group: -1,
-      category: 0x0001,
-      mask: 0xFFFFFFFF
-    },
     render: { fillStyle: "#cce5f6" }
   });
-
-  Body.setMass(bubble, 1);
 
   bubble.custom = {
     selected: false,
@@ -98,14 +89,13 @@ function createBubble(label) {
 
   Composite.add(engine.world, bubble);
 
-  const initialVelocity = getRandomVelocity();
-  Body.setVelocity(bubble, initialVelocity);
-  driftMap.set(bubble, initialVelocity);
+  const velocity = getRandomVelocity();
+  Body.setVelocity(bubble, velocity);
+  driftMap.set(bubble, velocity);
 
   return bubble;
 }
 
-// Create bubble DOM
 function createBubbleElement(text, size) {
   const el = document.createElement("div");
   el.classList.add("bubble");
@@ -134,10 +124,8 @@ function createBubbleElement(text, size) {
   return el;
 }
 
-// Spawn bubbles
 const bubbles = emotions.map(emotion => createBubble(emotion));
 
-// Apply motion and collision handling
 Events.on(engine, "afterUpdate", () => {
   for (const body of Composite.allBodies(engine.world)) {
     if (!body.custom?.element) continue;
@@ -152,16 +140,16 @@ Events.on(engine, "afterUpdate", () => {
     let drift = driftMap.get(body);
     if (!drift) continue;
 
-    // Gently bounce at boundaries
+    // Wall bounce
     if (x < 50 || x > width - 50) drift.x *= -1;
     if (y < 50 || y > height - 50) drift.y *= -1;
 
-    // Keep momentum alive
-    if (Math.random() < 0.05) {
-      drift.x += (Math.random() - 0.5) * 1.5;
-      drift.y += (Math.random() - 0.5) * 1.5;
-      drift.x = Math.max(-3, Math.min(3, drift.x));
-      drift.y = Math.max(-3, Math.min(3, drift.y));
+    // Gentle randomized variation
+    if (Math.random() < 0.02) {
+      drift.x += (Math.random() - 0.5) * 0.4;
+      drift.y += (Math.random() - 0.5) * 0.4;
+      drift.x = Math.max(-1.5, Math.min(1.5, drift.x));
+      drift.y = Math.max(-1.5, Math.min(1.5, drift.y));
     }
 
     Body.setVelocity(body, drift);
@@ -169,7 +157,7 @@ Events.on(engine, "afterUpdate", () => {
   }
 });
 
-// Handle submission
+// Submission
 nextButton.addEventListener("click", () => {
   if (selectedEmotions.length === 0) return alert("Pick at least one emotion.");
   const dbRef = ref(db, "entries");

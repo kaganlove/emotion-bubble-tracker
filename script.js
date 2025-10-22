@@ -20,7 +20,7 @@ const auth = getAuth(app);
 signInAnonymously(auth);
 
 // Matter.js setup
-const { Engine, Render, Runner, Bodies, Body, Composite, Events } = Matter;
+const { Engine, Render, Runner, Bodies, Body, Composite, Events, Vector } = Matter;
 
 const container = document.getElementById("bubble-container");
 const nextButton = document.getElementById("next-button");
@@ -49,46 +49,16 @@ const render = Render.create({
 Render.run(render);
 Runner.run(Runner.create(), engine);
 
-// Walls
+// Wall boundaries
 const wallThickness = 100;
 Composite.add(engine.world, [
-  Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }), // top
-  Bodies.rectangle(width / 2, height + wallThickness / 2, width, wallThickness, { isStatic: true }), // bottom
-  Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }), // left
-  Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }) // right
+  Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }),
+  Bodies.rectangle(width / 2, height + wallThickness / 2, width, wallThickness, { isStatic: true }),
+  Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }),
+  Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true })
 ]);
 
-function createBubble(label) {
-  const radius = 60 + Math.random() * 20;
-  const x = Math.random() * (width - 2 * radius) + radius;
-  const y = Math.random() * (height - 2 * radius) + radius;
-
-  const bubble = Bodies.circle(x, y, radius, {
-    label,
-    restitution: 1.0,
-    friction: 0,
-    frictionAir: 0.01,
-    slop: 0,
-    render: { fillStyle: "#cce5f6" }
-  });
-
-  bubble.custom = {
-    selected: false,
-    element: createBubbleElement(label, radius),
-    radius
-  };
-
-  Composite.add(engine.world, bubble);
-
-  // Give bubble a random float direction at spawn
-  const angle = Math.random() * 2 * Math.PI;
-  const speed = 1.5; // Moderate speed
-  const velocity = { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
-  Body.setVelocity(bubble, velocity);
-
-  return bubble;
-}
-
+// Create bubble DOM element
 function createBubbleElement(text, size) {
   const el = document.createElement("div");
   el.classList.add("bubble");
@@ -117,9 +87,46 @@ function createBubbleElement(text, size) {
   return el;
 }
 
+// Create and spawn a bubble
+function createBubble(label) {
+  const radius = 60 + Math.random() * 20;
+  const x = Math.random() * (width - 2 * radius) + radius;
+  const y = Math.random() * (height - 2 * radius) + radius;
+
+  const bubble = Bodies.circle(x, y, radius, {
+    label,
+    restitution: 1,
+    friction: 0,
+    frictionStatic: 0,
+    frictionAir: 0.01,
+    slop: 0,
+    inertia: Infinity,
+    collisionFilter: { group: -1 },
+    render: { fillStyle: "#cce5f6" }
+  });
+
+  bubble.custom = {
+    selected: false,
+    element: createBubbleElement(label, radius),
+    radius
+  };
+
+  // Start with random velocity
+  const angle = Math.random() * 2 * Math.PI;
+  const speed = 0.8 + Math.random() * 0.7;
+  Body.setVelocity(bubble, {
+    x: Math.cos(angle) * speed,
+    y: Math.sin(angle) * speed
+  });
+
+  Composite.add(engine.world, bubble);
+  return bubble;
+}
+
+// Spawn bubbles
 const bubbles = emotions.map(emotion => createBubble(emotion));
 
-// Update DOM bubble position each frame
+// Update DOM position to match physics
 Events.on(engine, "afterUpdate", () => {
   for (const body of Composite.allBodies(engine.world)) {
     if (!body.custom?.element) continue;
@@ -133,7 +140,26 @@ Events.on(engine, "afterUpdate", () => {
   }
 });
 
-// Submission
+// Repel overlapping bubbles to prevent sticking
+Events.on(engine, "collisionStart", function (event) {
+  event.pairs.forEach(pair => {
+    const { bodyA, bodyB } = pair;
+    if (bodyA.isStatic || bodyB.isStatic) return;
+
+    const overlap = Vector.sub(bodyB.position, bodyA.position);
+    const distance = Vector.magnitude(overlap);
+    const minDist = bodyA.circleRadius + bodyB.circleRadius;
+
+    if (distance < minDist) {
+      const normal = Vector.normalise(overlap);
+      const pushForce = Vector.mult(normal, 0.002); // Gentle repel
+      Body.applyForce(bodyA, bodyA.position, Vector.neg(pushForce));
+      Body.applyForce(bodyB, bodyB.position, pushForce);
+    }
+  });
+});
+
+// Submit handler
 nextButton.addEventListener("click", () => {
   if (selectedEmotions.length === 0) return alert("Pick at least one emotion.");
   const dbRef = ref(db, "entries");

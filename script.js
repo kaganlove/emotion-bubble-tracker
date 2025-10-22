@@ -20,7 +20,7 @@ const auth = getAuth(app);
 signInAnonymously(auth);
 
 // Matter.js setup
-const { Engine, Render, Runner, Bodies, Body, Composite, Events, Vector } = Matter;
+const { Engine, Render, Runner, Bodies, Body, Composite, Events } = Matter;
 
 const container = document.getElementById("bubble-container");
 const nextButton = document.getElementById("next-button");
@@ -52,18 +52,57 @@ Runner.run(Runner.create(), engine);
 // Wall boundaries
 const wallThickness = 100;
 Composite.add(engine.world, [
-  Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }), // top
-  Bodies.rectangle(width / 2, height + wallThickness / 2, width, wallThickness, { isStatic: true }), // bottom
-  Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }), // left
-  Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }) // right
+  Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }),
+  Bodies.rectangle(width / 2, height + wallThickness / 2, width, wallThickness, { isStatic: true }),
+  Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }),
+  Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true })
 ]);
 
-// Track velocities
+// Floating behavior
 const driftMap = new Map();
 function getRandomVelocity() {
-  const angle = Math.random() * Math.PI * 2;
-  const speed = 1.5 + Math.random() * 1.5;
-  return { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
+  return {
+    x: (Math.random() - 0.5) * 2.5,
+    y: (Math.random() - 0.5) * 2.5
+  };
+}
+
+// Create a bubble body
+function createBubble(label) {
+  const radius = 60 + Math.random() * 20;
+  const x = Math.random() * (width - 2 * radius) + radius;
+  const y = Math.random() * (height - 2 * radius) + radius;
+
+  const bubble = Bodies.circle(x, y, radius, {
+    label,
+    restitution: 1,
+    friction: 0,
+    frictionAir: 0.02,
+    slop: 0.01,
+    inertia: Infinity,
+    collisionFilter: {
+      group: -1,
+      category: 0x0001,
+      mask: 0xFFFFFFFF
+    },
+    render: { fillStyle: "#cce5f6" }
+  });
+
+  Body.setMass(bubble, 1);
+
+  bubble.custom = {
+    selected: false,
+    element: createBubbleElement(label, radius),
+    radius
+  };
+
+  Composite.add(engine.world, bubble);
+
+  const initialVelocity = getRandomVelocity();
+  Body.setVelocity(bubble, initialVelocity);
+  driftMap.set(bubble, initialVelocity);
+
+  return bubble;
 }
 
 // Create bubble DOM
@@ -95,40 +134,10 @@ function createBubbleElement(text, size) {
   return el;
 }
 
-// Create a bubble
-function createBubble(label) {
-  const radius = 60 + Math.random() * 20;
-  const x = Math.random() * (width - 2 * radius) + radius;
-  const y = Math.random() * (height - 2 * radius) + radius;
-
-  const bubble = Bodies.circle(x, y, radius, {
-    label,
-    restitution: 1,
-    friction: 0,
-    frictionAir: 0.02,
-    collisionFilter: { group: 0 },
-    render: { fillStyle: "#cce5f6" }
-  });
-
-  bubble.custom = {
-    selected: false,
-    element: createBubbleElement(label, radius),
-    radius
-  };
-
-  Composite.add(engine.world, bubble);
-
-  const initialVelocity = getRandomVelocity();
-  Body.setVelocity(bubble, initialVelocity);
-  driftMap.set(bubble, initialVelocity);
-
-  return bubble;
-}
-
-// Create all bubbles
+// Spawn bubbles
 const bubbles = emotions.map(emotion => createBubble(emotion));
 
-// Keep DOM elements in sync and apply bounce logic
+// Apply motion and collision handling
 Events.on(engine, "afterUpdate", () => {
   for (const body of Composite.allBodies(engine.world)) {
     if (!body.custom?.element) continue;
@@ -143,23 +152,18 @@ Events.on(engine, "afterUpdate", () => {
     let drift = driftMap.get(body);
     if (!drift) continue;
 
-    // Bounce off walls
-    if (x - r < 0 || x + r > width) {
-      drift.x *= -1;
-    }
-    if (y - r < 0 || y + r > height) {
-      drift.y *= -1;
-    }
+    // Gently bounce at boundaries
+    if (x < 50 || x > width - 50) drift.x *= -1;
+    if (y < 50 || y > height - 50) drift.y *= -1;
 
-    // Slightly randomize drift to prevent patterns
-    if (Math.random() < 0.02) {
-      drift.x += (Math.random() - 0.5) * 0.5;
-      drift.y += (Math.random() - 0.5) * 0.5;
+    // Keep momentum alive
+    if (Math.random() < 0.05) {
+      drift.x += (Math.random() - 0.5) * 1.5;
+      drift.y += (Math.random() - 0.5) * 1.5;
       drift.x = Math.max(-3, Math.min(3, drift.x));
       drift.y = Math.max(-3, Math.min(3, drift.y));
     }
 
-    // Apply the drift velocity
     Body.setVelocity(body, drift);
     driftMap.set(body, drift);
   }

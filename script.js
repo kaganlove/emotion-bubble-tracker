@@ -52,20 +52,11 @@ Runner.run(Runner.create(), engine);
 // Walls
 const wallThickness = 100;
 Composite.add(engine.world, [
-  Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }),
-  Bodies.rectangle(width / 2, height + wallThickness / 2, width, wallThickness, { isStatic: true }),
-  Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }),
-  Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true })
+  Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, { isStatic: true }), // top
+  Bodies.rectangle(width / 2, height + wallThickness / 2, width, wallThickness, { isStatic: true }), // bottom
+  Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }), // left
+  Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, { isStatic: true }) // right
 ]);
-
-// Floating behavior
-const driftMap = new Map();
-function getRandomVelocity() {
-  return {
-    x: (Math.random() - 0.5) * 1.25,  // 50% speed
-    y: (Math.random() - 0.5) * 1.25
-  };
-}
 
 function createBubble(label) {
   const radius = 60 + Math.random() * 20;
@@ -74,10 +65,10 @@ function createBubble(label) {
 
   const bubble = Bodies.circle(x, y, radius, {
     label,
-    restitution: 0.95,
+    restitution: 1.0,
     friction: 0,
     frictionAir: 0.01,
-    slop: 0.01,
+    slop: 0,
     render: { fillStyle: "#cce5f6" }
   });
 
@@ -89,9 +80,11 @@ function createBubble(label) {
 
   Composite.add(engine.world, bubble);
 
-  const velocity = getRandomVelocity();
+  // Give bubble a random float direction at spawn
+  const angle = Math.random() * 2 * Math.PI;
+  const speed = 1.5; // Moderate speed
+  const velocity = { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
   Body.setVelocity(bubble, velocity);
-  driftMap.set(bubble, velocity);
 
   return bubble;
 }
@@ -126,6 +119,7 @@ function createBubbleElement(text, size) {
 
 const bubbles = emotions.map(emotion => createBubble(emotion));
 
+// Update DOM bubble position each frame
 Events.on(engine, "afterUpdate", () => {
   for (const body of Composite.allBodies(engine.world)) {
     if (!body.custom?.element) continue;
@@ -136,24 +130,6 @@ Events.on(engine, "afterUpdate", () => {
 
     el.style.left = `${x - r}px`;
     el.style.top = `${y - r}px`;
-
-    let drift = driftMap.get(body);
-    if (!drift) continue;
-
-    // Wall bounce
-    if (x < 50 || x > width - 50) drift.x *= -1;
-    if (y < 50 || y > height - 50) drift.y *= -1;
-
-    // Gentle randomized variation
-    if (Math.random() < 0.02) {
-      drift.x += (Math.random() - 0.5) * 0.4;
-      drift.y += (Math.random() - 0.5) * 0.4;
-      drift.x = Math.max(-1.5, Math.min(1.5, drift.x));
-      drift.y = Math.max(-1.5, Math.min(1.5, drift.y));
-    }
-
-    Body.setVelocity(body, drift);
-    driftMap.set(body, drift);
   }
 });
 

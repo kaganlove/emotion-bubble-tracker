@@ -3,7 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// ✅ Firebase Configuration
+// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDeZj176_uisu7cbOJAUBDKaFQ_60ZsMnY",
   authDomain: "bubbletracker-2565f.firebaseapp.com",
@@ -13,7 +13,6 @@ const firebaseConfig = {
   appId: "1:332012322785:web:3979fafee9536800491ca0"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
@@ -31,7 +30,7 @@ let selectedEmotions = [];
 
 // Engine + Render
 const engine = Engine.create();
-engine.world.gravity.y = 0; // disable falling gravity
+engine.world.gravity.y = 0; // turn off falling gravity
 const width = window.innerWidth;
 const height = window.innerHeight * 0.75;
 
@@ -59,7 +58,7 @@ Composite.add(engine.world, [
 ]);
 
 // ---------------------------------------------------------
-// ✅ Create Bubbles with Floating Upward Motion
+// ✅ Create gently floating bubble
 // ---------------------------------------------------------
 function createBubble(label) {
   const radius = 60 + Math.random() * 20;
@@ -69,7 +68,7 @@ function createBubble(label) {
   const bubble = Bodies.circle(x, y, radius, {
     label,
     restitution: 0.9,
-    frictionAir: 0.03,
+    frictionAir: 0.05,
     render: { fillStyle: "#cce5f6" }
   });
 
@@ -79,10 +78,10 @@ function createBubble(label) {
     radius
   };
 
-  // ✅ Give each bubble an initial upward motion
+  // Set initial gentle drift
   Body.setVelocity(bubble, {
-    x: (Math.random() - 0.5) * 2,
-    y: -2 - Math.random() * 1.5
+    x: (Math.random() - 0.5) * 1.5,
+    y: (Math.random() - 0.5) * 1.5
   });
 
   Composite.add(engine.world, bubble);
@@ -90,7 +89,7 @@ function createBubble(label) {
 }
 
 // ---------------------------------------------------------
-// ✅ Create Bubble Element
+// ✅ Create Bubble DOM Element
 // ---------------------------------------------------------
 function createBubbleElement(text, size) {
   const el = document.createElement("div");
@@ -121,39 +120,42 @@ function createBubbleElement(text, size) {
 }
 
 // ---------------------------------------------------------
-// ✅ Spawn Floating Bubbles
+// ✅ Spawn All Bubbles
 // ---------------------------------------------------------
 emotions.forEach(emotion => createBubble(emotion));
 
 // ---------------------------------------------------------
-// ✅ Keep DOM Synced with Physics
+// ✅ Update Position + Random Drift Forces
 // ---------------------------------------------------------
 Events.on(engine, "afterUpdate", () => {
   for (const body of Composite.allBodies(engine.world)) {
     if (body.custom?.element) {
-      const { position } = body;
       const el = body.custom.element;
       const r = body.circleRadius;
+      const { x, y } = body.position;
 
-      el.style.left = `${position.x - r}px`;
-      el.style.top = `${position.y - r}px`;
+      el.style.left = `${x - r}px`;
+      el.style.top = `${y - r}px`;
 
-      // Continuous gentle drift to simulate floating
-      const xForce = (Math.random() - 0.5) * 0.0003;
-      const yForce = (Math.random() - 0.5) * 0.0003;
+      // Tiny floating motion
+      const xForce = (Math.random() - 0.5) * 0.0002;
+      const yForce = (Math.random() - 0.5) * 0.0002;
       Body.applyForce(body, body.position, { x: xForce, y: yForce });
 
-      // Keep floating upward slightly
-      Body.applyForce(body, body.position, { x: 0, y: -0.0002 });
+      // Optional: gentle push away from edges
+      if (y < 100) Body.applyForce(body, body.position, { x: 0, y: 0.0005 });
+      if (y > height - 100) Body.applyForce(body, body.position, { x: 0, y: -0.0005 });
+      if (x < 100) Body.applyForce(body, body.position, { x: 0.0005, y: 0 });
+      if (x > width - 100) Body.applyForce(body, body.position, { x: -0.0005, y: 0 });
     }
   }
 });
 
 // ---------------------------------------------------------
-// ✅ Handle "Next" Button
+// ✅ Handle Submission
 // ---------------------------------------------------------
 nextButton.addEventListener("click", () => {
-  if (selectedEmotions.length === 0) return alert("Pick at least one emotion first.");
+  if (selectedEmotions.length === 0) return alert("Pick at least one.");
 
   const dbRef = ref(db, "entries");
   push(dbRef, {
